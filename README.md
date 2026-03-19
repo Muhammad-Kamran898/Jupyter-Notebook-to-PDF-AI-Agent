@@ -11,4 +11,4 @@ Ensure you have Python 3.8+ installed.
 1. **Install Python Dependencies:**
 
    ```bash
-   pip install nbformat markdown pygments weasyprint
+   uv add nbformat markdown pygments weasyprint
