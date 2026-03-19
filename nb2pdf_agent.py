@@ -65,12 +65,23 @@ def build_agent_report(notebook_path, output_pdf_path):
 
                     elif output.output_type in ["execute_result", "display_data"]:
                         data = output.data
+                        # Standard HTML (Pandas DataFrames)
                         if "text/html" in data:
                             cell_content += (
                                 f'<div class="output-html">{data["text/html"]}</div>'
                             )
+                        # SVG Images (Plotly, advanced Matplotlib)
+                        elif "image/svg+xml" in data:
+                            cell_content += (
+                                f'<div class="output-svg">{data["image/svg+xml"]}</div>'
+                            )
+                        # PNG Images (Standard Matplotlib/Seaborn)
                         elif "image/png" in data:
-                            cell_content += f'<img class="output-image" src="data:image/png;base64,{data["image/png"]}" alt="Cell Output Image"/>'
+                            cell_content += f'<img class="output-image" src="data:image/png;base64,{data["image/png"]}" alt="PNG Output"/>'
+                        # JPEG Images
+                        elif "image/jpeg" in data:
+                            cell_content += f'<img class="output-image" src="data:image/jpeg;base64,{data["image/jpeg"]}" alt="JPEG Output"/>'
+                        # Plain text fallbacks
                         elif "text/plain" in data:
                             cell_content += (
                                 f'<pre class="output-plain">{data["text/plain"]}</pre>'
@@ -84,15 +95,25 @@ def build_agent_report(notebook_path, output_pdf_path):
                 cell_content += "</div>"
             html_cells.append(cell_content)
 
-    # 4. Build Table of Contents HTML
-    print("[*] Assembling Table of Contents...")
-    toc_html = (
-        "<div class='toc-container'><h2>Table of Contents</h2><ul class='toc-list'>"
-    )
-    for item in toc_items:
-        indent_class = f"toc-level-{item['level']}"
-        toc_html += f"<li class='{indent_class}'><a href='#{item['anchor']}'>{item['title']}</a></li>"
-    toc_html += "</ul></div><div class='page-break'></div>"
+    # 4. Build Table of Contents HTML (With Smart Fallback)
+    print("[*] Assembling Document Structure...")
+    if len(toc_items) > 0:
+        toc_html = (
+            "<div class='toc-container'><h2>Table of Contents</h2><ul class='toc-list'>"
+        )
+        for item in toc_items:
+            indent_class = f"toc-level-{item['level']}"
+            toc_html += f"<li class='{indent_class}'><a href='#{item['anchor']}'>{item['title']}</a></li>"
+        toc_html += "</ul></div><div class='page-break'></div>"
+    else:
+        # Fallback for notebooks with no markdown headers (like notebook-01.ipynb)
+        toc_html = """
+        <div class='toc-container'>
+            <h2>Report Content</h2>
+            <p style='color: #666; font-style: italic;'>No structural Markdown headers were found in this notebook. Proceeding directly to code execution logs.</p>
+        </div>
+        <div class='page-break'></div>
+        """
 
     # 5. Assemble Master HTML Document
     master_html = f"""
@@ -115,7 +136,7 @@ def build_agent_report(notebook_path, output_pdf_path):
                     color: #666;
                 }}
                 @top-left {{
-                    content: "Automated AI Analysis Report";
+                    content: "Automated Execution Report";
                     font-family: Arial, sans-serif;
                     font-size: 9pt;
                     color: #999;
@@ -160,13 +181,16 @@ def build_agent_report(notebook_path, output_pdf_path):
             .output-stream, .output-plain {{
                 white-space: pre-wrap;
                 font-family: 'Courier New', Courier, monospace;
+                margin: 0;
             }}
             .output-error {{
                 color: #dc3545;
                 white-space: pre-wrap;
                 font-family: 'Courier New', Courier, monospace;
+                margin: 0;
             }}
-            .output-image {{ max-width: 100%; height: auto; }}
+            .output-image {{ max-width: 100%; height: auto; margin-top: 10px; }}
+            .output-svg svg {{ max-width: 100%; height: auto; }}
             
             /* Pandas HTML Table Styling */
             table {{
