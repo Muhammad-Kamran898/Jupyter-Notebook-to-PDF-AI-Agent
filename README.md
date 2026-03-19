@@ -1,215 +1,123 @@
-# Jupyter to PDF Agent (`nb2pdf_agent`)
+# 📄 Jupyter Notebook to PDF Agent (`nb2pdf_agent`)
 
-An AI-powered document parsing agent that converts raw Jupyter Notebooks (`.ipynb`) into beautifully formatted, professional PDF and TXT reports.
+![nb2pdf Demo](https://via.placeholder.com/800x400.png?text=GIF+of+Terminal+Running+then+PDF+Opening)  
+*(Tip: Record a quick 5-10 second GIF of your script running and the PDF opening, upload it to your repo, and replace this link!)*
 
-Instead of dumping raw notebook visuals, this agent programmatically parses the underlying JSON, renders markdown, applies syntax highlighting to code, formats outputs (including Pandas DataFrames and plots), and compiles a polished PDF featuring a Table of Contents and dynamic page numbers.
+![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Local AI](https://img.shields.io/badge/AI-Ollama-purple.svg)
+![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg)
 
-## Features
+---
 
-- **AI-Powered Explanations**: Queries local Ollama instance with auto-model selection
-- **Smart Model Selection**: Automatically selects best model based on notebook complexity (Deep Learning, ML, or Basic Analysis)
-- **Parallel Processing**: Batches code cells and processes them concurrently (4 workers)
-- **Syntax Highlighting**: Beautiful Python code highlighting using Pygments
-- **Table of Contents**: Auto-generated TOC from markdown headers (H1-H3)
-- **Professional PDF Output**: Clean, formatted PDFs with page numbers
-- **Dual Output**: Generates both PDF and TXT reports simultaneously
-- **Multiple Output Formats**: Handles text, HTML, images (PNG), and error messages
-- **Error Handling**: Includes AI-powered error analysis with retry logic
-- **Progress Tracking**: Real-time progress bar using tqdm
+An **AI-powered document parsing agent** that converts raw Jupyter Notebooks (`.ipynb`) into **beautifully formatted, professional PDF and TXT reports**.
 
-## Requirements
+Instead of dumping raw notebook visuals, this agent:
 
-- Python 3.11 or higher
-- [Ollama](https://ollama.com/) installed and running locally (for AI features - optional)
+- Programmatically parses the notebook JSON
+- Renders Markdown
+- Applies syntax highlighting to code
+- Formats outputs (including Pandas DataFrames, plots, and images)
+- Compiles a polished PDF featuring a **Table of Contents** and **dynamic page numbers**
 
-## Installation
+---
 
-### 1. Install Python Dependencies
+## 💡 Why use `nb2pdf_agent` over `jupyter nbconvert`?
 
-Using uv (recommended):
+Standard Jupyter-to-PDF converters often:
+
+- Break layouts  
+- Cut off code  
+- Require massive LaTeX installations  
+
+**nb2pdf_agent** bypasses LaTeX entirely, using **HTML/CSS for perfect formatting** and a **local AI agent** to automatically read your code and generate professional explanations for **every cell**.  
+
+It transforms a messy scratchpad into a **boardroom-ready document in seconds**.
+
+---
+
+## ✨ Features
+
+- **AI-Powered Explanations**: Queries your local Ollama instance to explain each code cell.  
+- **Smart Model Selection**: Automatically picks the best model for your notebook complexity.  
+- **Fast Fallback**: Defaults to a lightweight model if heavy models aren’t available.  
+- **Parallel Processing**: Batches code cells and processes them concurrently.  
+- **Syntax Highlighting**: Beautiful Python code highlighting using Pygments.  
+- **Table of Contents**: Auto-generated from notebook Markdown headers.  
+- **Professional PDF Output**: Clean, formatted PDFs with dynamic page numbers.  
+- **Error Handling**: AI-powered error analysis explains *why code breaks and how to fix it*.  
+
+---
+
+## ⚙️ Requirements
+
+- **Python 3.11+**  
+- [**Ollama**](https://ollama.com/) installed and running locally (for AI features)
+
+---
+
+## 🚀 Installation
+
+### 1️⃣ Python Dependencies
+
+Using **uv** (recommended):
+
 ```bash
 uv add nbformat markdown pygments weasyprint requests tqdm argparse
-```
 
 Or using pip:
-```bash
+
 pip install nbformat markdown pygments weasyprint requests tqdm argparse
-```
+2️⃣ Install Ollama
 
-### 2. Install Ollama (Optional - for AI features)
+Windows: Download from ollama.com
 
-Ollama is required only if you want the AI code explanations feature.
+macOS: brew install ollama
 
-**Windows:**
-- Download and install from [ollama.com](https://ollama.com/download/windows)
+Linux:
 
-**macOS:**
-```bash
-brew install ollama
-```
-
-**Linux:**
-```bash
 curl -fsSL https://ollama.com/install.sh | sh
-```
 
-After installation, start Ollama:
-```bash
+After installation, start Ollama and pull your preferred model:
+
 ollama serve
-```
-
-Then pull the model (default: llama3.2):
-```bash
 ollama pull llama3.2
-```
+💻 Usage
 
-## Usage
+Convert a single notebook to PDF + TXT automatically:
 
-### Basic Usage
-
-Convert a single notebook to PDF and TXT:
-```bash
 python nb2pdf_agent.py input_notebook.ipynb
-```
-
-This will generate:
-- `pdf_reports/input_notebook_report.pdf`
-- `txt_reports/input_notebook_flow.txt`
-
-### Custom Output Paths
-
-Specify custom output filenames:
-```bash
+Advanced Commands
+# Custom output filenames
 python nb2pdf_agent.py notebook.ipynb --pdf my_report.pdf --txt notes.txt
-```
 
-### Select AI Model
-
-Choose a specific Ollama model or use auto-selection:
-```bash
-# Auto-select based on notebook complexity (default)
-python nb2pdf_agent.py notebook.ipynb --model auto
-
-# Use specific model
-python nb2pdf_agent.py notebook.ipynb --model llama3.2
+# Force a specific model instead of auto-detecting
 python nb2pdf_agent.py notebook.ipynb --model phi4
-```
+🧠 Auto Model Selection Logic
 
-### Command Line Options
+The agent analyzes your notebook to pick the best model:
 
-| Argument | Description |
-|----------|-------------|
-| `notebook` | Path to the input .ipynb file (required) |
-| `--pdf` | Custom PDF output path |
-| `--txt` | Custom TXT output path |
-| `--model` | Ollama model to use (default: auto) |
+Detected Libraries	Complexity	Preferred Models
+torch, tensorflow, keras, transformers	High	llama3:8b, phi4, gemma:7b
+sklearn, xgboost, lightgbm	Medium	mistral, llama3:8b, phi3
+Basic Python / Data Analysis	Low	llama3.2, qwen2.5:0.5b
 
-## How It Works
+If no preferred model is found, it falls back safely to the fastest lightweight model installed.
 
-```
-┌─────────────────┐     ┌──────────────────┐     ┌──────────────┐
-│  Jupyter .ipynb │ ──► │ nb2pdf_agent.py  │ ──► │ pdf_reports/ │
-│     (Input)     │     │   (Processing)   │     │  txt_reports │
-└─────────────────┘     └──────────────────┘     └──────────────┘
+🛠️ Troubleshooting
 
-Processing Steps:
-1. Parse notebook JSON using nbformat
-2. Extract markdown headers for Table of Contents
-3. Analyze notebook complexity → auto-select best Ollama model
-4. Batch code cells (size=4) for parallel processing
-5. For each batch:
-   - Query Ollama for AI explanations (with retry logic)
-   - Apply syntax highlighting with Pygments
-   - Process cell outputs (text, images, errors)
-6. Build styled HTML document
-7. Convert to PDF using WeasyPrint
-8. Export TXT report
-```
+Ollama Connection Error: If you see *AI Clarification unavailable*, ensure Ollama is running (ollama serve).
 
-### Auto Model Selection Logic
+WeasyPrint Issues (Windows): If PDF rendering fails, install GTK3.
 
-The agent analyzes your notebook content to select the best model:
+☕ Support the Project
 
-| Detected Libraries | Complexity | Preferred Models |
-|-------------------|------------|------------------|
-| torch, tensorflow, keras, transformers | High | llama3:8b, phi4, gemma:7b |
-| sklearn, xgboost, lightgbm | Medium | mistral, llama3:8b, phi3 |
-| Basic Python/Data Analysis | Low | llama3.2, qwen2.5:0.5b |
+If this tool saved you hours of formatting documentation or helped with assignments/presentations:
 
-## Output Features
+⭐ Star this repository
 
-- **Table of Contents**: Auto-generated from markdown headers (H1-H3)
-- **Page Numbers**: Dynamic page numbering at bottom-right
-- **Code Highlighting**: Syntax-highlighted Python code
-- **AI Explanations**: Purple-highlighted boxes showing model used and explanation
-- **Output Formatting**: Blue-bordered output sections
-- **Error Display**: Red-highlighted error messages with fix suggestions
-- **Image Support**: Inline PNG images
-- **Table Support**: Properly formatted Pandas DataFrames and markdown tables
+☕ Buy me a coffee on Ko-fi
 
-## Project Structure
-
-```
-.
-├── main.py                    # Simple entry point
-├── nb2pdf_agent.py            # Main conversion agent
-├── pyproject.toml             # Project configuration
-├── README.md                  # This file
-├── CLAUDE.md                  # AI assistant guidance
-├── notebooks/                 # Input notebooks directory
-│   └── (your .ipynb files)
-├── pdf_reports/               # Generated PDF outputs
-│   └── (generated PDFs)
-└── txt_reports/               # Generated TXT outputs
-    └── (generated TXT files)
-```
-
-## Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| nbformat | Read/parse Jupyter notebook JSON |
-| markdown | Convert Markdown to HTML |
-| pygments | Syntax highlighting |
-| weasyprint | HTML to PDF conversion |
-| requests | HTTP client for Ollama API |
-| tqdm | Progress bar for batch processing |
-| argparse | Command-line argument parsing |
-
-## Configuration
-
-You can modify batch processing settings in `nb2pdf_agent.py`:
-
-```python
-BATCH_SIZE = 4   # Number of cells per batch
-MAX_WORKERS = 4  # Parallel workers for processing
-```
-
-## Troubleshooting
-
-### Ollama Connection Error
-
-If you see: `*AI Clarification unavailable: Could not connect to Ollama...*`
-
-**Solution:**
-1. Make sure Ollama is installed: `ollama --version`
-2. Start Ollama service: `ollama serve`
-3. Pull the model: `ollama pull llama3.2`
-
-The PDF will still be generated, just without AI explanations.
-
-### WeasyPrint Issues (Windows)
-
-If you encounter WeasyPrint errors on Windows, you may need to install GTK3:
-- Download GTK3 from: https://github.com/SteaI/gtk3-installer/releases
-
-### PDF Rendering Issues
-
-If the PDF doesn't render correctly:
-1. Check that all dependencies are installed correctly
-2. Ensure the input notebook is a valid .ipynb file
-3. Try updating WeasyPrint: `pip install --upgrade weasyprint`
-
-## License
+📄 License
 
 MIT License
